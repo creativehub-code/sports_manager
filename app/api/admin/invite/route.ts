@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const origin = new URL(request.url).origin
 
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: `${origin}/login`,
+      redirectTo: `${origin}/api/auth/callback?next=/update-password`,
       data: {
         school_id: schoolId,
         role: 'school_admin',

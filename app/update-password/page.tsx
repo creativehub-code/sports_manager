@@ -1,56 +1,49 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Trophy, Eye, EyeOff, Loader2 } from 'lucide-react'
-
 import { Suspense } from 'react'
 
-function LoginContent() {
+function UpdatePasswordContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/'
-  const errorParam = searchParams.get('error')
-
-  useEffect(() => {
-    if (errorParam) {
-      toast.error(decodeURIComponent(errorParam))
-    }
-  }, [errorParam])
-
-  const [email, setEmail] = useState('')
+  
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      toast.error('Supabase is not configured. Please set up your .env.local file first.')
-      setLoading(false)
+    
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match')
       return
     }
 
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+
+    setLoading(true)
+
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const { error } = await supabase.auth.updateUser({
+      password: password
     })
 
     if (error) {
-      toast.error(error.message || 'Login failed. Check your credentials.')
+      toast.error(error.message || 'Failed to update password')
       setLoading(false)
       return
     }
 
-    toast.success('Logged in successfully!')
-    const userRole = data?.user?.user_metadata?.role
-    const targetUrl = (redirectTo === '/' && userRole === 'super_admin') ? '/admin' : redirectTo
-    router.push(targetUrl)
+    toast.success('Password updated successfully!')
+    router.push('/')
     router.refresh()
   }
 
@@ -70,47 +63,28 @@ function LoginContent() {
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-gold-gradient mb-1">
-            Sports Manager
+            Welcome to Sports Manager
           </h1>
           <p className="text-muted-foreground text-sm">
-            School Sports Event Administration
+            Please set a secure password for your account
           </p>
         </div>
 
-        {/* Login Card */}
+        {/* Update Password Card */}
         <div className="bg-card border border-border rounded-2xl p-8 shadow-2xl shadow-black/50">
-          <h2 className="text-xl font-semibold mb-1">Admin Sign In</h2>
+          <h2 className="text-xl font-semibold mb-1">Set Password</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Enter your admin credentials to continue
+            Enter and confirm your new password below.
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium text-foreground"
-              >
-                Email Address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@school.edu"
-                required
-                className="w-full px-4 py-3 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
-              />
-            </div>
-
-            {/* Password */}
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            {/* New Password */}
             <div className="space-y-1.5">
               <label
                 htmlFor="password"
                 className="text-sm font-medium text-foreground"
               >
-                Password
+                New Password
               </label>
               <div className="relative">
                 <input
@@ -136,41 +110,68 @@ function LoginContent() {
               </div>
             </div>
 
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-foreground"
+              >
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full px-4 py-3 pr-12 rounded-lg bg-input border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-6 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 mt-2 flex items-center justify-center gap-2"
+              className="w-full py-3 px-6 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 mt-4 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Signing in…
+                  Updating...
                 </>
               ) : (
-                'Sign In'
+                'Set Password'
               )}
             </button>
           </form>
         </div>
-
-        {/* Footer note */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Admin access only. Contact your system administrator to request access.
-        </p>
       </div>
     </div>
   )
 }
 
-export default function LoginPage() {
+export default function UpdatePasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     }>
-      <LoginContent />
+      <UpdatePasswordContent />
     </Suspense>
   )
 }
