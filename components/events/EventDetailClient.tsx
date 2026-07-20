@@ -74,7 +74,7 @@ export function EventDetailClient({
     const newStatus = event.status === 'open' ? 'locked' : 'open'
     const { error } = await supabase
       .from('events')
-      .update({ status: newStatus } as any)
+      .update({ status: newStatus })
       .eq('id', event.id)
     if (error) {
       toast.error('Failed: ' + error.message)
