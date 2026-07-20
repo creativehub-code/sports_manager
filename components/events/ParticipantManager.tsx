@@ -75,7 +75,7 @@ export function ParticipantManager({
       ? { event_id: event.id, student_id: id, group_id: null }
       : { event_id: event.id, student_id: null, group_id: id }
 
-    const { error } = await supabase.from('participants').insert(payload)
+    const { error } = await supabase.from('participants').insert(payload as any)
     if (error) {
       toast.error('Could not add participant: ' + error.message)
     } else {

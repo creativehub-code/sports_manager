@@ -90,16 +90,7 @@ export default async function DashboardPage() {
 
   // Aggregate student points to find the top performing athlete
   const studentPoints: Record<string, { id: string; name: string; class: string; group: string; color: string | null; points: number }> = {}
-  topResults?.forEach((r: {
-    student_id: string
-    points_earned: number
-    students: {
-      id: string
-      name: string
-      class: string
-      groups: { name: string; color: string | null } | null
-    } | null
-  }) => {
+  topResults?.forEach((r: any) => {
     const sid = r.student_id
     if (!studentPoints[sid]) {
       studentPoints[sid] = {

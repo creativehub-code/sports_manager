@@ -107,27 +107,44 @@ export type Database = {
         Row: Group
         Insert: Omit<Group, 'id' | 'created_at'>
         Update: Partial<Omit<Group, 'id' | 'created_at'>>
+        Relationships: any[]
       }
       students: {
         Row: Student
         Insert: Omit<Student, 'id' | 'created_at' | 'groups' | 'participation_count'>
         Update: Partial<Omit<Student, 'id' | 'created_at' | 'groups' | 'participation_count'>>
+        Relationships: any[]
       }
       events: {
         Row: Event
         Insert: Omit<Event, 'id' | 'created_at'>
         Update: Partial<Omit<Event, 'id' | 'created_at'>>
+        Relationships: any[]
       }
       participants: {
         Row: Participant
         Insert: Omit<Participant, 'id' | 'students' | 'groups'>
         Update: Partial<Omit<Participant, 'id' | 'students' | 'groups'>>
+        Relationships: any[]
       }
       results: {
         Row: Result
         Insert: Omit<Result, 'id' | 'created_at' | 'students' | 'groups' | 'events'>
         Update: Partial<Omit<Result, 'id' | 'created_at' | 'students' | 'groups' | 'events'>>
+        Relationships: any[]
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }

@@ -81,7 +81,7 @@ export function ResultsEntry({
       await supabase.from('results').delete().eq('id', existing.id)
     }
 
-    const { error } = await supabase.from('results').insert(payload)
+    const { error } = await supabase.from('results').insert(payload as any)
     if (error) {
       if (error.message.includes('locked') || error.code === '42501') {
         toast.error('Cannot add results — event is locked')
