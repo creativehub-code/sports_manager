@@ -3,22 +3,28 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  // if "next" is in param, use it as the redirect URL
+
+  // 'code' ന് പകരം 'token_hash', 'type' എന്നിവ എടുക്കുന്നു
+  const token_hash = searchParams.get('token_hash')
+  const type = searchParams.get('type')
   const next = searchParams.get('next') ?? '/'
 
-  if (code) {
+  if (token_hash && type) {
     const supabase = createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    // പുതിയ verifyOtp രീതി
+    const { error } = await supabase.auth.verifyOtp({
+      type: type as any,
+      token_hash,
+    })
+
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`)
     } else {
-      // Handle error, e.g., token expired or invalid code
-      console.error('Exchange code error:', error.message)
+      console.error('Verify OTP error:', error.message)
       return NextResponse.redirect(`${origin}/login?error=Invalid%20or%20expired%20invitation%20link.`)
     }
   }
 
-  // return the user to an error page with instructions
+  // token_hash ഇല്ലാത്ത അവസ്ഥയിൽ
   return NextResponse.redirect(`${origin}/login?error=No%20invitation%20code%20provided.`)
 }
