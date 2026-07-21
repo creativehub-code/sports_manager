@@ -13,7 +13,9 @@ import {
   Check, 
   Clock, 
   Loader2,
-  ChevronDown 
+  ChevronDown,
+  Copy,
+  X
 } from 'lucide-react'
 
 interface AdminUser {
@@ -36,6 +38,7 @@ export default function AdminUsersPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [selectedSchoolId, setSelectedSchoolId] = useState('')
   const [showInviteForm, setShowInviteForm] = useState(false)
+  const [newAdminCredentials, setNewAdminCredentials] = useState<{email: string, tempPassword: string} | null>(null)
 
   // Use authSchools if available, otherwise fallback to apiSchools fetched from server
   const availableSchools = authSchools.length > 0 ? authSchools : apiSchools
@@ -88,7 +91,10 @@ export default function AdminUsersPage() {
       const data = await res.json()
 
       if (res.ok) {
-        toast.success(`Invitation successfully sent to ${inviteEmail}`)
+        toast.success(`Account successfully created for ${inviteEmail}`)
+        if (data.tempPassword) {
+          setNewAdminCredentials({ email: inviteEmail, tempPassword: data.tempPassword })
+        }
         setInviteEmail('')
         setShowInviteForm(false)
         fetchUsers() // Refresh user list
@@ -290,6 +296,64 @@ export default function AdminUsersPage() {
           )}
         </div>
       </div>
+
+      {/* New Admin Credentials Modal */}
+      {newAdminCredentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0b1b2f] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#081526]/50">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-emerald-400" />
+                Account Created Successfully
+              </h3>
+              <button 
+                onClick={() => setNewAdminCredentials(null)}
+                className="p-1 hover:bg-white/5 rounded-lg transition-colors text-[#526a8a] hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-xs text-[#8ca3c0]">
+                Please copy and securely share these credentials with the new administrator. 
+                <span className="text-amber-400 font-medium block mt-1">They will be forced to change this password on their first login.</span>
+              </p>
+              
+              <div className="space-y-3 bg-[#081526] border border-white/5 rounded-xl p-4">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#526a8a] block mb-1">Email</span>
+                  <span className="text-sm text-white">{newAdminCredentials.email}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-[#526a8a] block mb-1">Temporary Password</span>
+                  <div className="flex items-center justify-between gap-3 bg-[#0b1b2f] border border-white/10 rounded-lg p-2.5">
+                    <code className="text-sm text-emerald-400 font-mono select-all">
+                      {newAdminCredentials.tempPassword}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(newAdminCredentials.tempPassword)
+                        toast.success('Password copied to clipboard')
+                      }}
+                      className="flex items-center justify-center w-8 h-8 rounded-md bg-white/5 hover:bg-white/10 text-[#8ca3c0] hover:text-white transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setNewAdminCredentials(null)}
+                className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/95 transition-all duration-200"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

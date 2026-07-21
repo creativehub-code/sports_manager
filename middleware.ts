@@ -48,6 +48,11 @@ export async function middleware(request: NextRequest) {
   // Allow login page always
   if (pathname.startsWith('/login')) {
     if (user) {
+      const forceReset = user.user_metadata?.force_password_reset === true
+      if (forceReset) {
+        return NextResponse.redirect(new URL('/update-password', request.url))
+      }
+      
       // Already logged in — redirect to correct dashboard
       const role = user.user_metadata?.role
       const targetUrl = role === 'super_admin' ? '/admin' : '/'
@@ -66,6 +71,11 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Force password reset check for protected routes
+  if (user.user_metadata?.force_password_reset === true && !pathname.startsWith('/update-password')) {
+    return NextResponse.redirect(new URL('/update-password', request.url))
   }
 
   return supabaseResponse

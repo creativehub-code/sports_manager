@@ -33,7 +33,10 @@ function UpdatePasswordContent() {
 
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({
-      password: password
+      password: password,
+      data: {
+        force_password_reset: false
+      }
     })
 
     if (error) {
