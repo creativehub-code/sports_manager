@@ -28,6 +28,7 @@ CREATE TABLE groups (
 -- Students
 CREATE TABLE students (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id  UUID REFERENCES schools(id) ON DELETE CASCADE,
   name       TEXT NOT NULL,
   class      TEXT NOT NULL,
   category   student_category NOT NULL,
@@ -138,8 +139,18 @@ CREATE POLICY "Authenticated users can delete groups"
 -- STUDENTS policies
 CREATE POLICY "Authenticated users can read students"
   ON students FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can insert students"
-  ON students FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "School admins can insert students for their school"
+  ON students FOR INSERT TO authenticated
+  WITH CHECK (
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+    )
+    OR
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    )
+  );
 CREATE POLICY "Authenticated users can update students"
   ON students FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Authenticated users can delete students"

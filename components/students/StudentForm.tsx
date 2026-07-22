@@ -21,7 +21,7 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
   const isEdit = !!student
   const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
-  const { schoolId } = useAuth()
+  const { schoolId, user } = useAuth()
 
   const [firstName, setFirstName] = useState(() => {
     if (!student) return ''
@@ -91,7 +91,8 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
         if (error) throw error
         toast.success('Athlete updated successfully')
       } else {
-        if (!schoolId) throw new Error('No school context selected')
+        const currentSchoolId = schoolId || user?.user_metadata?.school_id
+        if (!currentSchoolId) throw new Error('No school context selected')
         const { data: inserted, error: insertError } = await (supabase
           .from('students') as any)
           .insert({
@@ -100,10 +101,11 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
             category,
             group_id: groupId || null,
             photo_url: null,
-            school_id: schoolId,
+            school_id: currentSchoolId,
           } as any)
           .select()
           .single()
+        if (insertError) throw insertError
         if (insertError) throw insertError
 
         const photoUrl = await uploadPhoto((inserted as any).id)
