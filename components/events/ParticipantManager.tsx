@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Search, Plus, X, Users, Loader2, UserMinus } from 'lucide-react'
 import type { Event, Participant, Student, Group } from '@/lib/types'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 interface ParticipantManagerProps {
   event: Event
@@ -22,6 +23,7 @@ export function ParticipantManager({
   onParticipantsChanged,
 }: ParticipantManagerProps) {
   const supabase = createClient()
+  const { schoolId } = useAuth()
   const [search, setSearch] = useState('')
   const [dropdown, setDropdown] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -72,8 +74,8 @@ export function ParticipantManager({
     setSearch('')
 
     const payload = isIndividual
-      ? { event_id: event.id, student_id: id, group_id: null }
-      : { event_id: event.id, student_id: null, group_id: id }
+      ? { event_id: event.id, student_id: id, group_id: null, school_id: schoolId }
+      : { event_id: event.id, student_id: null, group_id: id, school_id: schoolId }
 
     const { error } = await supabase.from('participants').insert(payload as any)
     if (error) {
