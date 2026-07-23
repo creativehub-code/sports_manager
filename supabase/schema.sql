@@ -116,12 +116,11 @@ BEGIN
     );
   END IF;
 
-  -- Otherwise, verify event is open and belongs to the current user's school
+  -- Otherwise, verify event is open (events are global, so no school_id check needed)
   RETURN EXISTS (
     SELECT 1 FROM events 
     WHERE id = p_event_id 
       AND status = 'open' 
-      AND school_id = public.current_user_school_id()
   );
 END;
 $$;

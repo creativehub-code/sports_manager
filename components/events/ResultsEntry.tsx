@@ -190,7 +190,7 @@ export function ResultsEntry({
                 ) : isLocked ? (
                   <p className="text-xs text-[#909097] italic select-none pl-1">No winner recorded</p>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <select
                       value={selections[rank] || ''}
                       onChange={(e) =>
@@ -218,7 +218,7 @@ export function ResultsEntry({
                       {saving === rank ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        'Save'
+                        'Add Point'
                       )}
                     </button>
                   </div>

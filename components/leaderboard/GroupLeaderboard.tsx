@@ -20,52 +20,35 @@ export function GroupLeaderboard({ initialData }: GroupLeaderboardProps) {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const { data: rows, error } = await supabase
-        .from('results')
+      const { data: groups, error } = await supabase
+        .from('groups')
         .select(`
-          group_id,
-          rank,
-          points_earned,
-          groups!inner(id, name, color),
-          events!inner(type)
+          id,
+          name,
+          color,
+          total_points,
+          results(rank)
         `)
-        .not('group_id', 'is', null)
-        .eq('events.type', 'group')
 
       if (error) throw error
 
       const map: Record<string, GroupLeaderboardEntry> = {}
-      for (const row of (rows as any[]) || []) {
-        const gid = row.group_id
-        if (!map[gid]) {
-          map[gid] = {
-            group_id: gid,
-            group_name: row.groups.name,
-            group_color: row.groups.color || null,
-            total_points: 0,
-            gold_count: 0,
-            silver_count: 0,
-            bronze_count: 0,
-          }
+      for (const g of (groups as any[]) || []) {
+        let gold = 0, silver = 0, bronze = 0
+        for (const r of g.results || []) {
+          if (r.rank === 1) gold++
+          if (r.rank === 2) silver++
+          if (r.rank === 3) bronze++
         }
-        map[gid].total_points += row.points_earned
-        if (row.rank === 1) map[gid].gold_count++
-        if (row.rank === 2) map[gid].silver_count++
-        if (row.rank === 3) map[gid].bronze_count++
-      }
 
-      const { data: allGroups } = await supabase.from('groups').select('*')
-      for (const g of (allGroups as any[]) || []) {
-        if (!map[g.id]) {
-          map[g.id] = {
-            group_id: g.id,
-            group_name: g.name,
-            group_color: g.color,
-            total_points: 0,
-            gold_count: 0,
-            silver_count: 0,
-            bronze_count: 0,
-          }
+        map[g.id] = {
+          group_id: g.id,
+          group_name: g.name,
+          group_color: g.color,
+          total_points: g.total_points || 0,
+          gold_count: gold,
+          silver_count: silver,
+          bronze_count: bronze,
         }
       }
 

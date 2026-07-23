@@ -18,7 +18,8 @@ import {
   ChevronDown,
   School as SchoolIcon,
   Shield,
-  Info
+  Info,
+  Layers
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -52,9 +53,9 @@ const navItems = [
     icon: BarChart3,
   },
   {
-    label: 'Settings',
+    label: 'Groups',
     href: '/groups',
-    icon: Settings,
+    icon: Layers,
   },
 ]
 

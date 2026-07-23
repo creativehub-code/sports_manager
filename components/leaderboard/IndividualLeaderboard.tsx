@@ -28,42 +28,44 @@ export function IndividualLeaderboard({
     async (cat: Category | 'All' = category) => {
       setLoading(true)
       try {
-        // Aggregate via Supabase
+        // Fetch students and their results to count medals
         let query = supabase
-          .from('results')
+          .from('students')
           .select(`
-            student_id,
-            rank,
-            points_earned,
-            students!inner(id, name, class, category, groups(name, color))
+            id,
+            name,
+            class,
+            category,
+            total_points,
+            groups(name, color),
+            results(rank)
           `)
-          .not('student_id', 'is', null)
+          .gt('total_points', 0)
 
-        const { data: rows, error } = await query
+        const { data: students, error } = await query
         if (error) throw error
 
-        // Aggregate in JS
         const map: Record<string, IndividualLeaderboardEntry> = {}
-        for (const row of (rows as any[]) || []) {
-          const sid = row.student_id
-          if (!map[sid]) {
-            map[sid] = {
-              student_id: sid,
-              student_name: row.students.name,
-              class: row.students.class,
-              category: row.students.category,
-              group_name: row.students.groups?.name || null,
-              group_color: row.students.groups?.color || null,
-              total_points: 0,
-              gold_count: 0,
-              silver_count: 0,
-              bronze_count: 0,
-            }
+        for (const s of (students as any[]) || []) {
+          let gold = 0, silver = 0, bronze = 0
+          for (const r of s.results || []) {
+            if (r.rank === 1) gold++
+            if (r.rank === 2) silver++
+            if (r.rank === 3) bronze++
           }
-          map[sid].total_points += row.points_earned
-          if (row.rank === 1) map[sid].gold_count++
-          if (row.rank === 2) map[sid].silver_count++
-          if (row.rank === 3) map[sid].bronze_count++
+
+          map[s.id] = {
+            student_id: s.id,
+            student_name: s.name,
+            class: s.class,
+            category: s.category,
+            group_name: s.groups?.name || null,
+            group_color: s.groups?.color || null,
+            total_points: s.total_points || 0,
+            gold_count: gold,
+            silver_count: silver,
+            bronze_count: bronze,
+          }
         }
 
         let entries = Object.values(map)
