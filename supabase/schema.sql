@@ -194,18 +194,77 @@ CREATE POLICY "Authenticated users can insert participants"
 CREATE POLICY "Authenticated users can delete participants"
   ON participants FOR DELETE TO authenticated USING (true);
 
--- RESULTS policies (insert/update blocked when event is locked)
+-- RESULTS policies (restricted to admin's school context for student results)
 CREATE POLICY "Authenticated users can read results"
   ON results FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Can insert results only when event is open"
+
+CREATE POLICY "Admins can insert results only for their students when event is open"
   ON results FOR INSERT TO authenticated
-  WITH CHECK (is_event_open(event_id));
-CREATE POLICY "Can update results only when event is open"
+  WITH CHECK (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND is_event_open(event_id)
+      AND (
+        student_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM students
+          WHERE id = student_id
+            AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+        )
+      )
+    )
+  );
+
+CREATE POLICY "Admins can update results only for their students when event is open"
   ON results FOR UPDATE TO authenticated
-  USING (is_event_open(event_id))
-  WITH CHECK (is_event_open(event_id));
-CREATE POLICY "Authenticated users can delete results"
-  ON results FOR DELETE TO authenticated USING (true);
+  USING (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND is_event_open(event_id)
+      AND (
+        student_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM students
+          WHERE id = student_id
+            AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+        )
+      )
+    )
+  )
+  WITH CHECK (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND is_event_open(event_id)
+      AND (
+        student_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM students
+          WHERE id = student_id
+            AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+        )
+      )
+    )
+  );
+
+CREATE POLICY "Admins can delete results only for their students"
+  ON results FOR DELETE TO authenticated
+  USING (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND (
+        student_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM students
+          WHERE id = student_id
+            AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+        )
+      )
+    )
+  );
 
 -- ================================================
 -- REALTIME (run after enabling realtime on project)

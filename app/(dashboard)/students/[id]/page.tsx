@@ -6,6 +6,8 @@ import { ArrowLeft, Camera, CalendarDays, Trophy } from 'lucide-react'
 import { cn, getCategoryColor, getRankLabel } from '@/lib/utils'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = { title: 'Student Detail' }
 
 export default async function StudentDetailPage({
@@ -47,7 +49,7 @@ export default async function StudentDetailPage({
     .eq('student_id', params.id)
     .order('rank')
 
-  const totalPoints = results?.reduce((sum, r: any) => sum + r.points_earned, 0) || 0
+  const totalPoints = student.total_points || 0
   const goldCount = results?.filter((r: any) => r.rank === 1).length || 0
   const silverCount = results?.filter((r: any) => r.rank === 2).length || 0
   const bronzeCount = results?.filter((r: any) => r.rank === 3).length || 0
