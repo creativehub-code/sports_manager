@@ -137,10 +137,22 @@ CREATE POLICY "Authenticated users can delete groups"
   ON groups FOR DELETE TO authenticated USING (true);
 
 -- STUDENTS policies
-CREATE POLICY "Authenticated users can read students"
-  ON students FOR SELECT TO authenticated USING (true);
-CREATE POLICY "School admins can insert students for their school"
-  ON students FOR INSERT TO authenticated
+
+DROP POLICY IF EXISTS "Authenticated users can update students" ON students;
+DROP POLICY IF EXISTS "Authenticated users can delete students" ON students;
+
+CREATE POLICY "School admins can update their students"
+  ON students FOR UPDATE TO authenticated
+  USING (
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+    )
+    OR
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    )
+  )
   WITH CHECK (
     (
       (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
@@ -151,10 +163,19 @@ CREATE POLICY "School admins can insert students for their school"
       (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
     )
   );
-CREATE POLICY "Authenticated users can update students"
-  ON students FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated users can delete students"
-  ON students FOR DELETE TO authenticated USING (true);
+
+CREATE POLICY "School admins can delete their students"
+  ON students FOR DELETE TO authenticated
+  USING (
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+    )
+    OR
+    (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    )
+  );
 
 -- EVENTS policies
 CREATE POLICY "Authenticated users can read events"
