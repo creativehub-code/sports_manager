@@ -232,7 +232,7 @@ export function CSVUpload({ groups, onSuccess, onCancel }: CSVUploadProps) {
           </div>
 
           {/* Preview Table */}
-          <div className="border border-white/5 rounded-2xl overflow-hidden max-h-52 overflow-y-auto bg-black/20">
+          <div className="border border-white/5 rounded-2xl overflow-hidden max-h-52 overflow-y-auto overflow-x-auto bg-black/20">
             <table className="w-full text-xs">
               <thead className="bg-white/5 border-b border-white/5 sticky top-0">
                 <tr>

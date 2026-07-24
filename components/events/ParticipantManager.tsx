@@ -28,6 +28,7 @@ export function ParticipantManager({
   const [dropdown, setDropdown] = useState(false)
   const [adding, setAdding] = useState(false)
   const [removing, setRemoving] = useState<string | null>(null)
+  const [selectedGroupForEvent, setSelectedGroupForEvent] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -46,10 +47,13 @@ export function ParticipantManager({
           (s.name.toLowerCase().includes(search.toLowerCase()) ||
             s.class.toLowerCase().includes(search.toLowerCase()))
       )
-    : groups.filter(
-        (g) =>
-          !addedGroupIds.has(g.id) &&
-          g.name.toLowerCase().includes(search.toLowerCase())
+    : students.filter(
+        (s) =>
+          s.group_id === selectedGroupForEvent &&
+          s.category === event.category &&
+          !addedStudentIds.has(s.id) &&
+          (s.name.toLowerCase().includes(search.toLowerCase()) ||
+            s.class.toLowerCase().includes(search.toLowerCase()))
       )
 
   // Close dropdown on outside click
@@ -75,7 +79,7 @@ export function ParticipantManager({
 
     const payload = isIndividual
       ? { event_id: event.id, student_id: id, group_id: null, school_id: schoolId }
-      : { event_id: event.id, student_id: null, group_id: id, school_id: schoolId }
+      : { event_id: event.id, student_id: id, group_id: selectedGroupForEvent, school_id: schoolId }
 
     const { error } = await supabase.from('participants').insert(payload as any)
     if (error) {
@@ -116,29 +120,50 @@ export function ParticipantManager({
 
       {/* Search & Add */}
       {!isLocked && (
-        <div className="relative">
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl input-glass">
-            <Search className="w-4 h-4 text-[#909097] flex-shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={search}
+        <div className="relative space-y-2">
+          {!isIndividual && (
+            <select
+              value={selectedGroupForEvent}
               onChange={(e) => {
-                setSearch(e.target.value)
-                setDropdown(true)
+                setSelectedGroupForEvent(e.target.value)
+                setSearch('')
+                setDropdown(false)
               }}
-              onFocus={() => setDropdown(true)}
-              placeholder={
-                isIndividual ? 'Search student name...' : 'Search house name...'
-              }
-              className="flex-1 bg-transparent text-[#d4e4fa] placeholder:text-[#909097]/50 focus:outline-none text-sm"
-              disabled={adding}
-            />
-            {adding && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#909097]" />}
-          </div>
+              className="w-full px-3 py-2.5 rounded-2xl input-glass text-xs text-[#d4e4fa] focus:outline-none"
+            >
+              <option value="" className="bg-[#0c1a2c]">— Select Team / House First —</option>
+              {groups.map((g) => (
+                <option key={g.id} value={g.id} className="bg-[#0c1a2c]">
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {(isIndividual || selectedGroupForEvent) && (
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl input-glass">
+              <Search className="w-4 h-4 text-[#909097] flex-shrink-0" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setDropdown(true)
+                }}
+                onFocus={() => setDropdown(true)}
+                placeholder={
+                  isIndividual ? 'Search student name...' : `Search ${event.category} students in team...`
+                }
+                className="flex-1 bg-transparent text-[#d4e4fa] placeholder:text-[#909097]/50 focus:outline-none text-sm"
+                disabled={adding}
+              />
+              {adding && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#909097]" />}
+            </div>
+          )}
 
           {/* Suggestions Dropdown */}
-          {dropdown && suggestions.length > 0 && (
+          {dropdown && suggestions.length > 0 && (isIndividual || selectedGroupForEvent) && (
             <div
               ref={dropdownRef}
               className="absolute z-20 top-full mt-2 left-0 right-0 bg-[#0d1c2d] border border-white/10 rounded-2xl shadow-2xl overflow-hidden max-h-52 overflow-y-auto"
@@ -150,29 +175,17 @@ export function ParticipantManager({
                   onClick={() => addParticipant(item.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors text-left text-sm border-b border-white/5 last:border-b-0"
                 >
-                  {isIndividual ? (
-                    <>
-                      <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs text-[#7bd0ff] font-semibold">
-                          {(item as Student).name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-[#d4e4fa] text-xs">{(item as Student).name}</p>
-                        <p className="text-[10px] text-[#909097] mt-0.5">
-                          {(item as Student).class} · {(item as Student).category}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div
-                        className="w-6 h-6 rounded-full flex-shrink-0 border border-white/10"
-                        style={{ backgroundColor: (item as Group).color || '#909097' }}
-                      />
-                      <span className="font-semibold text-xs text-[#d4e4fa]">{(item as Group).name}</span>
-                    </>
-                  )}
+                  <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs text-[#7bd0ff] font-semibold">
+                      {(item as Student).name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#d4e4fa] text-xs">{(item as Student).name}</p>
+                    <p className="text-[10px] text-[#909097] mt-0.5">
+                      {(item as Student).class} · {(item as Student).category}
+                    </p>
+                  </div>
                   <Plus className="w-4 h-4 text-[#ffb95f] ml-auto flex-shrink-0" />
                 </button>
               ))}
@@ -190,13 +203,9 @@ export function ParticipantManager({
       ) : (
         <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
           {participants.map((p) => {
-            const displayName = isIndividual
-              ? p.students?.name
-              : p.groups?.name
-            const subtitle = isIndividual
-              ? `${p.students?.class} · ${p.students?.category}`
-              : null
-            const color = !isIndividual ? p.groups?.color : null
+            const displayName = p.students?.name
+            const subtitle = `${p.students?.class} · ${p.students?.category}`
+            const color = p.groups?.color
 
             return (
               <div
@@ -208,6 +217,7 @@ export function ParticipantManager({
                     color ? '' : 'bg-white/5'
                   }`}
                     style={color ? { backgroundColor: color } : undefined}
+                    title={p.groups?.name || 'No House'}
                   >
                     {!color && (
                       <span className="text-xs text-[#7bd0ff] font-semibold">
@@ -217,7 +227,7 @@ export function ParticipantManager({
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-[#d4e4fa]">{displayName}</p>
-                    {subtitle && <p className="text-[10px] text-[#909097] mt-0.5">{subtitle}</p>}
+                    <p className="text-[10px] text-[#909097] mt-0.5">{subtitle}</p>
                   </div>
                 </div>
 

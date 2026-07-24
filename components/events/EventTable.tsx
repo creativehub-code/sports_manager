@@ -126,7 +126,7 @@ export function EventTable({ initialEvents }: EventTableProps) {
           <p className="text-xs text-[#909097] mt-1">Configure your first event to start logging results</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEvents.map((event) => {
             const isOpen = event.status === 'open'
             return (
@@ -151,6 +151,9 @@ export function EventTable({ initialEvents }: EventTableProps) {
                       <div className="flex items-center gap-2 mt-1 select-none">
                         <span className="text-[9px] font-bold uppercase tracking-wider text-[#909097] bg-white/5 px-1.5 py-0.5 rounded">
                           {event.type}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded">
+                          {event.category || 'Senior'}
                         </span>
                         {event.point_multiplier !== 1 && (
                           <span className="text-[9px] font-bold text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">

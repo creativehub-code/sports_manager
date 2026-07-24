@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Loader2, Check } from 'lucide-react'
-import type { Event, EventType } from '@/lib/types'
+import type { Event, EventType, Category } from '@/lib/types'
 import { useAuth } from '@/components/providers/AuthProvider'
 
 interface EventFormProps {
@@ -20,6 +20,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
 
   const [name, setName] = useState(event?.name || '')
   const [type, setType] = useState<EventType>(event?.type || 'individual')
+  const [category, setCategory] = useState<Category>(event?.category || 'Senior')
   const [points1st, setPoints1st] = useState(event?.points_1st ?? 5)
   const [points2nd, setPoints2nd] = useState(event?.points_2nd ?? 3)
   const [points3rd, setPoints3rd] = useState(event?.points_3rd ?? 1)
@@ -34,6 +35,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     const payload = {
       name: name.trim(),
       type,
+      category,
       points_1st: points1st,
       points_2nd: points2nd,
       points_3rd: points3rd,
@@ -91,6 +93,27 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
               }`}
             >
               {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Division / Category */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold uppercase tracking-wider text-[#909097] select-none">Division / Category</label>
+        <div className="grid grid-cols-3 gap-2">
+          {(['Sub Junior', 'Junior', 'Senior'] as Category[]).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={`py-3 px-2 rounded-2xl text-[11px] font-semibold uppercase tracking-wider border transition-all ${
+                category === c
+                  ? 'bg-[#7bd0ff]/10 border-[#7bd0ff]/40 text-[#7bd0ff]'
+                  : 'bg-white/5 border-white/5 text-[#909097] hover:text-[#d4e4fa]'
+              }`}
+            >
+              {c}
             </button>
           ))}
         </div>

@@ -35,6 +35,7 @@ export interface Event {
   school_id: string
   name: string
   type: EventType
+  category: Category
   points_1st: number
   points_2nd: number
   points_3rd: number

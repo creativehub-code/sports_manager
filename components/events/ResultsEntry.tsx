@@ -133,9 +133,15 @@ export function ResultsEntry({
             const usedIds = getUsedIds(rank)
 
             // Build options list
+            const uniqueGroupIds = new Set<string>()
             const options = participants.filter((p) => {
               const id = isIndividual ? p.student_id : p.group_id
-              return id && !usedIds.has(id)
+              if (!id || usedIds.has(id)) return false
+              if (!isIndividual) {
+                if (uniqueGroupIds.has(id)) return false
+                uniqueGroupIds.add(id)
+              }
+              return true
             })
 
             const existingName = existing

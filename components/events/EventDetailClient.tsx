@@ -110,6 +110,9 @@ export function EventDetailClient({
               <span className="text-[9px] font-bold uppercase tracking-wider text-[#909097] bg-white/5 px-1.5 py-0.5 rounded">
                 {event.type} event
               </span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded">
+                {event.category || 'Senior'}
+              </span>
               {event.point_multiplier !== 1 && (
                 <span className="text-[9px] font-bold text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
                   <Sparkles className="w-2 h-2" />

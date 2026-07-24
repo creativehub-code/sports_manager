@@ -50,7 +50,7 @@ export default async function StudentDetailPage({
     .eq('student_id', params.id)
     .order('rank')
 
-  console.log('Results data:', results, 'Error:', resultsError)
+
 
   const totalPoints = student.total_points || 0
   const goldCount = results?.filter((r: any) => Number(r.rank) === 1).length || 0
