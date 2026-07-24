@@ -175,7 +175,7 @@ export function IndividualLeaderboard({
       </div>
 
       {/* Print title (hidden on screen) */}
-      <div className="print-title hidden">Individual Champion List — Sports Manager</div>
+      <div className="print-title hidden">Individual Champion List — Athlead</div>
 
       {/* Category Filter */}
       <div className="flex gap-1.5 flex-wrap no-print">

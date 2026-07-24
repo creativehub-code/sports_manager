@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Trophy, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { Suspense } from 'react'
 
 function UpdatePasswordContent() {
@@ -62,11 +63,11 @@ function UpdatePasswordContent() {
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         {/* Logo / Brand */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4 glow-gold">
-            <Trophy className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4">
+            <Image src="/logo.png" alt="Athlead Logo" width={80} height={80} className="object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gold-gradient mb-1">
-            Welcome to Sports Manager
+            Welcome to Athlead
           </h1>
           <p className="text-muted-foreground text-sm">
             Please set a secure password for your account

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Trophy,
   LayoutDashboard,
   Users,
   Shield,
@@ -13,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -71,11 +71,11 @@ export function Sidebar({ onClose }: SidebarProps) {
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-          <Trophy className="w-5 h-5 text-primary" />
+        <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center flex-shrink-0">
+          <Image src="/logo.png" alt="Athlead Logo" width={36} height={36} className="object-contain" />
         </div>
         <div>
-          <p className="font-bold text-sm text-foreground">Sports Manager</p>
+          <p className="font-bold text-sm text-foreground">Athlead</p>
           <p className="text-xs text-muted-foreground">Admin Portal</p>
         </div>
       </div>

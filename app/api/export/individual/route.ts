@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
 
   // Build Excel
   const workbook = new ExcelJS.Workbook()
-  workbook.creator = 'Sports Manager'
+  workbook.creator = 'Athlead'
   const sheet = workbook.addWorksheet('Individual Leaderboard')
 
   // Title

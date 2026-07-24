@@ -96,12 +96,12 @@ export function MobileAppShell({ children, userEmail: _userEmail }: MobileAppShe
   const activeAdminTab = searchParams.get('tab') || 'dashboard'
 
   // Determine page title and header icons based on path
-  let pageTitle = 'Sports Manager'
+  let pageTitle = 'Athlead'
   let showBackBtn = false
   let showMenuBtn = true
 
   if (pathname === '/') {
-    pageTitle = 'Sports Manager'
+    pageTitle = 'Athlead'
   } else if (pathname.startsWith('/students/')) {
     pageTitle = 'Athlete Detail'
     showBackBtn = true

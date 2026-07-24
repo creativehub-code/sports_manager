@@ -12,13 +12,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Sports Manager — School Sports Event Admin',
-    template: '%s | Sports Manager',
+    default: 'Athlead — School Sports & Leaderboard App',
+    template: '%s | Athlead',
   },
   description:
-    'Admin portal for managing school sports events, students, groups, and leaderboards.',
+    'Athlead: Admin portal for managing school sports events, students, groups, and leaderboards.',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/logo.png',
   },
 }
 
