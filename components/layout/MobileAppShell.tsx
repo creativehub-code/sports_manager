@@ -212,15 +212,15 @@ export function MobileAppShell({ children, userEmail: _userEmail }: MobileAppShe
         {/* Scrollable Main Content Area */}
         <main className={cn(
           "flex-1 overflow-y-auto px-6 py-6 z-10 relative scrollbar-none",
-          hasBottomDock ? "pb-[108px] md:pb-6 md:pl-[120px]" : "pb-6"
+          hasBottomDock ? "pb-28 md:pb-6 md:pl-[120px]" : "pb-6"
         )}>
           {children}
         </main>
 
         {/* Persistent Floating Bottom Dock / Left Sidebar on lg */}
         {hasBottomDock && (
-          <div className="absolute bottom-6 left-6 right-6 h-[72px] md:top-24 md:bottom-6 md:right-auto md:w-[88px] md:h-auto z-40 pointer-events-none flex justify-center md:justify-start">
-            <nav className="glass-dock w-full max-w-[380px] md:max-w-none md:w-full h-full rounded-[24px] px-6 md:px-0 md:py-8 flex flex-row md:flex-col items-center justify-between md:justify-start md:gap-8 pointer-events-auto">
+          <div className="fixed bottom-0 left-0 right-0 h-[80px] px-4 pb-3 md:absolute md:bottom-6 md:left-6 md:right-auto md:top-24 md:w-[88px] md:h-auto md:px-0 md:pb-0 z-50 pointer-events-none flex justify-center md:justify-start">
+            <nav className="glass-dock w-full max-w-[480px] md:max-w-none md:w-full h-full rounded-[24px] px-6 md:px-0 md:py-8 flex flex-row md:flex-col items-center justify-between md:justify-start md:gap-8 pointer-events-auto">
               {pathname === '/admin' ? (
                 adminNavItems.map((item) => {
                   const isActive = activeAdminTab === item.tab
