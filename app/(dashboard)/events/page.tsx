@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { EventTable } from '@/components/events/EventTable'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = { title: 'Events' }
 
 export default async function EventsPage() {

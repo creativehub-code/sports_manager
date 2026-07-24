@@ -126,7 +126,7 @@ export function EventTable({ initialEvents }: EventTableProps) {
           <p className="text-xs text-[#909097] mt-1">Configure your first event to start logging results</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredEvents.map((event) => {
             const isOpen = event.status === 'open'
             return (

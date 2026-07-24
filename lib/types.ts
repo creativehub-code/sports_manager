@@ -32,6 +32,7 @@ export interface Student {
 
 export interface Event {
   id: string
+  school_id: string
   name: string
   type: EventType
   points_1st: number

@@ -192,7 +192,7 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
             <p className="text-xs text-[#909097] mt-1">Try adjusting search query or filter tags</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {paginated.map((student) => (
               <div
                 key={student.id}

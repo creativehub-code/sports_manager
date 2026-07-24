@@ -193,7 +193,7 @@ export function GroupLeaderboard({ initialData }: GroupLeaderboardProps) {
             <p className="text-sm font-semibold text-[#d4e4fa]">No groups found</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4">
             {runnerUps.map((entry, idx) => {
               const rank = idx + 2
               return (

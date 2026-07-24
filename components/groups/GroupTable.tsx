@@ -80,7 +80,7 @@ export function GroupTable({ initialGroups }: GroupTableProps) {
           <p className="text-xs text-[#909097] mt-1">Configure your first house to organize athletes</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {groups.map((group) => (
             <div
               key={group.id}

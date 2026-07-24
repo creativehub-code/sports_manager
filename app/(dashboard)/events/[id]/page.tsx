@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { EventDetailClient } from '@/components/events/EventDetailClient'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = { title: 'Event Detail' }
 
 export default async function EventDetailPage({

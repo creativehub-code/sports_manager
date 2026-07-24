@@ -42,6 +42,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
 
     try {
       if (isEdit) {
+        if (!schoolId) throw new Error('No school context selected')
         const { error } = await supabase.from('events').update(payload).eq('id', event.id)
         if (error) throw error
         toast.success('Event updated successfully')

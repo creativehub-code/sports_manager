@@ -162,7 +162,7 @@ export function MobileAppShell({ children, userEmail: _userEmail }: MobileAppShe
   return (
     <div className="min-h-screen bg-[#010f1f] text-foreground flex items-center justify-center font-sans antialiased p-0 sm:p-4">
       {/* Device Wrapper Container */}
-      <div className="w-full max-w-[480px] h-screen sm:h-[880px] bg-[#051424] shadow-2xl relative border-0 sm:border border-[#1c2b3c] sm:rounded-[36px] flex flex-col overflow-hidden">
+      <div className="w-full max-w-[480px] lg:max-w-[1366px] h-screen sm:h-[880px] lg:h-[95vh] xl:h-screen bg-[#051424] shadow-2xl relative border-0 sm:border lg:border-0 border-[#1c2b3c] sm:rounded-[36px] lg:rounded-none flex flex-col overflow-hidden">
         
         {/* Dynamic Top Bar */}
         <header className="h-16 flex-shrink-0 flex items-center justify-between px-6 border-b border-white/5 bg-[#051424]/90 backdrop-blur-md z-30 select-none">
@@ -212,15 +212,15 @@ export function MobileAppShell({ children, userEmail: _userEmail }: MobileAppShe
         {/* Scrollable Main Content Area */}
         <main className={cn(
           "flex-1 overflow-y-auto px-6 py-6 z-10 relative scrollbar-none",
-          hasBottomDock ? "pb-[108px]" : "pb-6"
+          hasBottomDock ? "pb-[108px] lg:pb-6 lg:pl-[120px]" : "pb-6"
         )}>
           {children}
         </main>
 
-        {/* Persistent Floating Bottom Dock */}
+        {/* Persistent Floating Bottom Dock / Left Sidebar on lg */}
         {hasBottomDock && (
-          <div className="absolute bottom-6 left-6 right-6 h-[72px] z-40 pointer-events-none flex justify-center">
-            <nav className="glass-dock w-full max-w-[380px] h-full rounded-[24px] px-6 flex items-center justify-between pointer-events-auto">
+          <div className="absolute bottom-6 left-6 right-6 h-[72px] lg:top-24 lg:bottom-6 lg:right-auto lg:w-[88px] lg:h-auto z-40 pointer-events-none flex justify-center lg:justify-start">
+            <nav className="glass-dock w-full max-w-[380px] lg:max-w-none lg:w-full h-full rounded-[24px] px-6 lg:px-0 lg:py-8 flex flex-row lg:flex-col items-center justify-between lg:justify-start lg:gap-8 pointer-events-auto">
               {pathname === '/admin' ? (
                 adminNavItems.map((item) => {
                   const isActive = activeAdminTab === item.tab
