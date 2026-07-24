@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { StudentTable } from '@/components/students/StudentTable'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Students' }
 
 export default async function StudentsPage() {

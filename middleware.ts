@@ -2,18 +2,55 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Generate a nonce for CSP
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+
+  // Construct the Content Security Policy
+  const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${
+      process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"
+    };
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data: https://*.supabase.co;
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    connect-src 'self' https://*.supabase.co ${
+      process.env.NODE_ENV === 'production' ? '' : 'ws://localhost:* http://localhost:*'
+    };
+    upgrade-insecure-requests;
+  `.replace(/\s{2,}/g, ' ').trim()
+
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', cspHeader)
+
   // Guard: env vars not yet configured
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
     // Allow everything — user needs to set up .env.local first
-    return NextResponse.next({ request })
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
+    response.headers.set('Content-Security-Policy', cspHeader)
+    return response
   }
 
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   })
+
+  // Apply CSP to response
+  supabaseResponse.headers.set('Content-Security-Policy', cspHeader)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -28,8 +65,11 @@ export async function middleware(request: NextRequest) {
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({
-            request,
+            request: {
+              headers: requestHeaders,
+            },
           })
+          supabaseResponse.headers.set('Content-Security-Policy', cspHeader)
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -83,13 +123,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

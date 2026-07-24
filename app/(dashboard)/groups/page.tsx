@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { GroupTable } from '@/components/groups/GroupTable'
 import type { Metadata } from 'next'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Groups',
 }
