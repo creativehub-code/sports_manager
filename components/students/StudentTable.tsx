@@ -34,6 +34,7 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
   const [students, setStudents] = useState<Student[]>(initialStudents)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<Category | 'All'>('All')
+  const [groupFilter, setGroupFilter] = useState<string>('All')
   const [page, setPage] = useState(0)
 
   const [dialogMode, setDialogMode] = useState<'edit' | null>(null)
@@ -67,7 +68,8 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
       s.class.toLowerCase().includes(search.toLowerCase()) ||
       (s.groups?.name || '').toLowerCase().includes(search.toLowerCase())
     const matchCat = categoryFilter === 'All' || s.category === categoryFilter
-    return matchSearch && matchCat
+    const matchGroup = groupFilter === 'All' || s.group_id === groupFilter
+    return matchSearch && matchCat && matchGroup
   })
 
   // Pagination
@@ -136,22 +138,28 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
         </div>
       )}
 
-      {!showCreate && (
-        <button
-          onClick={() => setShowCreate(true)}
-          className="fixed bottom-28 right-6 sm:right-[calc(50vw-216px)] z-40 w-14 h-14 rounded-full action-btn-primary flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 select-none"
-          title="Add New Athlete"
-        >
-          <Plus className="w-6 h-6 text-[#2a1700]" />
-        </button>
-      )}
 
       {/* Registered Athletes List Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#909097] select-none">
-            Registered Athletes ({filtered.length})
-          </h2>
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#909097] select-none">
+              Registered Athletes
+            </h2>
+            <p className="text-xs text-[#909097]/80 mt-1 select-none">
+              {filtered.length} athlete{filtered.length !== 1 ? 's' : ''} found
+            </p>
+          </div>
+          
+          {!showCreate && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="px-4 py-2.5 rounded-full action-btn-primary text-xs flex items-center gap-1.5 select-none"
+            >
+              <Plus className="w-3.5 h-3.5 text-[#2a1700]" />
+              New Athlete
+            </button>
+          )}
         </div>
 
         {/* Filters */}
@@ -178,7 +186,40 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
                     : 'border-white/5 text-[#909097] hover:text-[#d4e4fa] hover:border-white/10'
                 )}
               >
-                {cat}
+                {cat === 'All' ? 'All Categories' : cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              onClick={() => { setGroupFilter('All'); setPage(0) }}
+              className={cn(
+                'px-4 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap',
+                groupFilter === 'All'
+                  ? 'bg-[#ffb95f]/10 border-[#ffb95f]/40 text-[#ffb95f]'
+                  : 'border-white/5 text-[#909097] hover:text-[#d4e4fa] hover:border-white/10'
+              )}
+            >
+              All Groups
+            </button>
+            {groups.map((group) => (
+              <button
+                key={group.id}
+                onClick={() => { setGroupFilter(group.id); setPage(0) }}
+                className={cn(
+                  'px-4 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap',
+                  groupFilter === group.id
+                    ? 'bg-[#ffb95f]/10 border-[#ffb95f]/40 text-[#ffb95f]'
+                    : 'border-white/5 text-[#909097] hover:text-[#d4e4fa] hover:border-white/10'
+                )}
+                style={groupFilter === group.id && group.color ? {
+                  color: group.color,
+                  borderColor: `${group.color}40`,
+                  backgroundColor: `${group.color}10`
+                } : undefined}
+              >
+                {group.name}
               </button>
             ))}
           </div>
@@ -192,27 +233,27 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
             <p className="text-xs text-[#909097] mt-1">Try adjusting search query or filter tags</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col">
             {paginated.map((student) => (
               <div
                 key={student.id}
-                className="glass-card rounded-[24px] p-4 flex items-center justify-between border-white/5 hover:border-[#ffb95f]/15"
+                className="py-3 flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/5 hover:bg-white/[0.02] transition-colors gap-3"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {student.photo_url ? (
                       <Image
                         src={student.photo_url}
                         alt={student.name}
-                        width={48}
-                        height={48}
+                        width={40}
+                        height={40}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <Camera className="w-4 h-4 text-[#909097]" />
                     )}
                   </div>
-                  <div>
+                  <div className="flex flex-col">
                     <Link
                       href={`/students/${student.id}`}
                       className="text-sm font-semibold text-[#d4e4fa] hover:text-[#ffb95f] transition-colors"
@@ -220,12 +261,12 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
                       {student.name}
                     </Link>
                     <p className="text-xs text-[#909097] mt-0.5">
-                      DOB: {student.class || 'N/A'}
+                      Class: {student.class || 'N/A'} · {student.category || 'N/A'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-end gap-3 shrink-0">
                   {student.groups && (
                     <span
                       className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
@@ -242,13 +283,13 @@ export function StudentTable({ initialStudents, groups }: StudentTableProps) {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => { setEditTarget(student); setDialogMode('edit') }}
-                      className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-[#909097] hover:text-[#d4e4fa] active:scale-90 transition-all"
+                      className="p-2 rounded-full hover:bg-white/10 text-[#909097] hover:text-[#d4e4fa] active:scale-90 transition-all"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(student)}
-                      className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-[#909097] hover:text-red-400 active:scale-90 transition-all"
+                      className="p-2 rounded-full hover:bg-red-500/10 text-[#909097] hover:text-red-400 active:scale-90 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

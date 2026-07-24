@@ -16,7 +16,9 @@ import {
 } from 'lucide-react'
 import { EventForm } from './EventForm'
 import { cn } from '@/lib/utils'
-import type { Event } from '@/lib/types'
+import type { Event, Category } from '@/lib/types'
+
+const CATEGORIES: Category[] = ['Sub Junior', 'Junior', 'Senior']
 
 interface EventTableProps {
   initialEvents: Event[]
@@ -26,6 +28,7 @@ export function EventTable({ initialEvents }: EventTableProps) {
   const supabase = createClient()
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [filter, setFilter] = useState<'all' | 'individual' | 'group'>('all')
+  const [categoryFilter, setCategoryFilter] = useState<Category | 'All'>('All')
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | null>(null)
   const [editTarget, setEditTarget] = useState<Event | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Event | null>(null)
@@ -75,8 +78,9 @@ export function EventTable({ initialEvents }: EventTableProps) {
   }
 
   const filteredEvents = events.filter((e) => {
-    if (filter === 'all') return true
-    return e.type === filter
+    const matchType = filter === 'all' || e.type === filter
+    const matchCat = categoryFilter === 'All' || e.category === categoryFilter
+    return matchType && matchCat
   })
 
   return (
@@ -118,6 +122,23 @@ export function EventTable({ initialEvents }: EventTableProps) {
         ))}
       </div>
 
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none mt-3">
+        {(['All', ...CATEGORIES] as const).map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategoryFilter(cat)}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-semibold border transition-all whitespace-nowrap',
+              categoryFilter === cat
+                ? 'bg-[#ffb95f]/10 border-[#ffb95f]/40 text-[#ffb95f]'
+                : 'border-white/5 text-[#909097] hover:text-[#d4e4fa] hover:border-white/10'
+            )}
+          >
+            {cat === 'All' ? 'All Categories' : cat}
+          </button>
+        ))}
+      </div>
+
       {/* Events List of Glass Cards */}
       {filteredEvents.length === 0 ? (
         <div className="glass-card rounded-[24px] py-16 flex flex-col items-center justify-center text-center">
@@ -126,51 +147,54 @@ export function EventTable({ initialEvents }: EventTableProps) {
           <p className="text-xs text-[#909097] mt-1">Configure your first event to start logging results</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col">
           {filteredEvents.map((event) => {
             const isOpen = event.status === 'open'
             return (
               <div
                 key={event.id}
-                className="glass-card rounded-[24px] p-4 flex flex-col gap-3 border-white/5 hover:border-[#ffb95f]/15"
+                className="py-4 flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 hover:bg-white/[0.02] transition-colors gap-4"
               >
-                {/* Top Section: Name & Details */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
-                      <CalendarDays className="w-5 h-5 text-[#7bd0ff]" />
-                    </div>
-                    <div>
-                      <Link
-                        href={`/events/${event.id}`}
-                        className="text-sm font-semibold text-[#d4e4fa] hover:text-[#ffb95f] transition-colors flex items-center gap-1 group"
-                      >
-                        {event.name}
-                        <ChevronRight className="w-4 h-4 text-[#909097] group-hover:text-[#ffb95f] transition-colors" />
-                      </Link>
-                      <div className="flex items-center gap-2 mt-1 select-none">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#909097] bg-white/5 px-1.5 py-0.5 rounded">
-                          {event.type}
+                {/* Left Side: Name & Details */}
+                <div className="flex items-start md:items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <CalendarDays className="w-5 h-5 text-[#7bd0ff]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <Link
+                      href={`/events/${event.id}`}
+                      className="text-sm font-semibold text-[#d4e4fa] hover:text-[#ffb95f] transition-colors flex items-center gap-1 group"
+                    >
+                      {event.name}
+                      <ChevronRight className="w-4 h-4 text-[#909097] group-hover:text-[#ffb95f] transition-colors md:hidden" />
+                    </Link>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 select-none">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#909097] bg-white/5 px-1.5 py-0.5 rounded">
+                        {event.type}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded">
+                        {event.category || 'Senior'}
+                      </span>
+                      {event.point_multiplier !== 1 && (
+                        <span className="text-[9px] font-bold text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <Sparkles className="w-2 h-2" />
+                          ×{event.point_multiplier} Multiplier
                         </span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded">
-                          {event.category || 'Senior'}
-                        </span>
-                        {event.point_multiplier !== 1 && (
-                          <span className="text-[9px] font-bold text-[#7bd0ff] bg-[#7bd0ff]/10 border border-[#7bd0ff]/20 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                            <Sparkles className="w-2 h-2" />
-                            ×{event.point_multiplier} Multiplier
-                          </span>
-                        )}
-                      </div>
+                      )}
+                      <span className="text-[10px] text-[#909097] ml-1">
+                        🥇 {event.points_1st} · 🥈 {event.points_2nd} · 🥉 {event.points_3rd}
+                      </span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Status Indicator Badge */}
+                {/* Right Side: Actions & Status */}
+                <div className="flex items-center justify-end gap-1 shrink-0">
                   <button
                     onClick={() => toggleLock(event)}
                     disabled={toggling === event.id}
                     className={cn(
-                      'text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 transition-all select-none',
+                      'text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 transition-all select-none mr-2',
                       isOpen
                         ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
                         : 'bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20'
@@ -178,37 +202,27 @@ export function EventTable({ initialEvents }: EventTableProps) {
                   >
                     {isOpen ? '● Open' : '🔒 Locked'}
                   </button>
-                </div>
 
-                {/* Bottom Section: Points Breakdown & Controls */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs text-[#909097] select-none">
-                  <div>
-                    Points: 🥇 {event.points_1st} · 🥈 {event.points_2nd} · 🥉 {event.points_3rd}
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    {/* Action buttons */}
-                    <button
-                      onClick={() => { setEditTarget(event); setDialogMode('edit') }}
-                      className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-[#909097] hover:text-[#d4e4fa] active:scale-90 transition-all"
-                      title="Edit Event"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(event)}
-                      className="p-2 rounded-full bg-white/5 hover:bg-red-500/10 text-[#909097] hover:text-red-400 active:scale-90 transition-all"
-                      title="Delete Event"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                    <Link
-                      href={`/events/${event.id}`}
-                      className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-[#d4e4fa] hover:bg-white/10 transition-all"
-                    >
-                      Enter Results
-                    </Link>
-                  </div>
+                  <button
+                    onClick={() => { setEditTarget(event); setDialogMode('edit') }}
+                    className="p-2 rounded-full hover:bg-white/10 text-[#909097] hover:text-[#d4e4fa] transition-all"
+                    title="Edit Event"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setDeleteTarget(event)}
+                    className="p-2 rounded-full hover:bg-red-500/10 text-[#909097] hover:text-red-400 transition-all"
+                    title="Delete Event"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  <Link
+                    href={`/events/${event.id}`}
+                    className="px-3 py-1.5 ml-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-[#d4e4fa] hover:bg-white/10 transition-all"
+                  >
+                    Results
+                  </Link>
                 </div>
               </div>
             )
