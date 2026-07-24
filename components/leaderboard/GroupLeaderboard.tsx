@@ -16,43 +16,30 @@ export function GroupLeaderboard({ initialData }: GroupLeaderboardProps) {
   const [data, setData] = useState<GroupLeaderboardEntry[]>(initialData)
   const [loading, setLoading] = useState(false)
   const [lastUpdated, setLastUpdated] = useState(new Date())
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const { data: groups, error } = await supabase
-        .from('groups')
-        .select(`
-          id,
-          name,
-          color,
-          total_points,
-          results(rank)
-        `)
+        .from('group_leaderboard_view')
+        .select('*')
 
       if (error) throw error
 
-      const map: Record<string, GroupLeaderboardEntry> = {}
-      for (const g of (groups as any[]) || []) {
-        let gold = 0, silver = 0, bronze = 0
-        for (const r of g.results || []) {
-          if (r.rank === 1) gold++
-          if (r.rank === 2) silver++
-          if (r.rank === 3) bronze++
-        }
-
-        map[g.id] = {
-          group_id: g.id,
-          group_name: g.name,
-          group_color: g.color,
-          total_points: g.total_points || 0,
-          gold_count: gold,
-          silver_count: silver,
-          bronze_count: bronze,
-        }
-      }
-
-      const entries = Object.values(map).sort((a, b) => {
+      const entries = ((groups as any[]) || []).map((g) => ({
+        group_id: g.id,
+        group_name: g.name,
+        group_color: g.color,
+        total_points: g.total_points || 0,
+        gold_count: g.gold_count || 0,
+        silver_count: g.silver_count || 0,
+        bronze_count: g.bronze_count || 0,
+      })).sort((a, b) => {
         if (b.total_points !== a.total_points) return b.total_points - a.total_points
         if (b.gold_count !== a.gold_count) return b.gold_count - a.gold_count
         if (b.silver_count !== a.silver_count) return b.silver_count - a.silver_count
@@ -114,7 +101,7 @@ export function GroupLeaderboard({ initialData }: GroupLeaderboardProps) {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-[10px] font-bold text-[#909097] uppercase tracking-widest">
-            Live Feed · Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            Live Feed {mounted && `· Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`}
           </span>
         </div>
 

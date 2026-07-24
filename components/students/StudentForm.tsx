@@ -228,24 +228,22 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
           />
         </div>
 
-        {/* Optional Group/House dropdown for Edit Mode */}
-        {isEdit && (
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Assign House / Group</label>
-            <select
-              value={groupId}
-              onChange={(e) => setGroupId(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] focus:outline-none"
-            >
-              <option value="" className="bg-[#0c1a2c]">— No group —</option>
-              {groups.map((g) => (
-                <option key={g.id} value={g.id} className="bg-[#0c1a2c] text-[#d4e4fa]">
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Optional Group/House dropdown */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Assign House / Group</label>
+          <select
+            value={groupId}
+            onChange={(e) => setGroupId(e.target.value)}
+            className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] focus:outline-none"
+          >
+            <option value="" className="bg-[#0c1a2c]">— No group —</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id} className="bg-[#0c1a2c] text-[#d4e4fa]">
+                {g.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
       </div>
 

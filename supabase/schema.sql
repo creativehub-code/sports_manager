@@ -20,9 +20,11 @@ CREATE TYPE event_status AS ENUM ('open', 'locked');
 -- Groups / Houses
 CREATE TABLE groups (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       TEXT NOT NULL UNIQUE,
+  school_id  UUID REFERENCES schools(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
   color      TEXT,                          -- hex color e.g. '#e74c3c'
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT groups_name_school_id_key UNIQUE (name, school_id)
 );
 
 -- Students
@@ -126,14 +128,16 @@ END;
 $$;
 
 -- GROUPS policies
-CREATE POLICY "Authenticated users can read groups"
-  ON groups FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Authenticated users can insert groups"
-  ON groups FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "Authenticated users can update groups"
-  ON groups FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated users can delete groups"
-  ON groups FOR DELETE TO authenticated USING (true);
+CREATE POLICY "Admins can manage their school's groups"
+  ON groups FOR ALL TO authenticated
+  USING (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+  )
+  WITH CHECK (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+  );
 
 -- STUDENTS policies
 
@@ -295,3 +299,29 @@ CREATE POLICY "Admins can delete results only for their students"
 --   ('Blue House',  '#3b82f6'),
 --   ('Green House', '#22c55e'),
 --   ('Gold House',  '#f59e0b');
+
+-- ================================================
+-- VIEWS
+-- ================================================
+CREATE OR REPLACE VIEW group_leaderboard_view AS
+SELECT
+  g.id,
+  g.school_id,
+  g.name,
+  g.color,
+  COALESCE(SUM(r.points_earned), 0)::FLOAT AS total_points,
+  COUNT(CASE WHEN r.rank = 1 THEN 1 END)::INTEGER AS gold_count,
+  COUNT(CASE WHEN r.rank = 2 THEN 1 END)::INTEGER AS silver_count,
+  COUNT(CASE WHEN r.rank = 3 THEN 1 END)::INTEGER AS bronze_count
+FROM groups g
+LEFT JOIN (
+  -- 1. Results linked directly to a group (for group events)
+  SELECT group_id, points_earned, rank FROM results WHERE group_id IS NOT NULL
+  UNION ALL
+  -- 2. Results linked to students that belong to a group (for individual events)
+  SELECT s.group_id, r.points_earned, r.rank
+  FROM results r
+  JOIN students s ON r.student_id = s.id
+  WHERE s.group_id IS NOT NULL
+) r ON g.id = r.group_id
+GROUP BY g.id, g.school_id, g.name, g.color;
