@@ -8,9 +8,7 @@ export async function middleware(request: NextRequest) {
   // Construct the Content Security Policy
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${
-      process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"
-    };
+    script-src 'self' 'unsafe-inline' 'unsafe-eval';
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' blob: data: https://*.supabase.co;
     font-src 'self' data: https://fonts.gstatic.com;
@@ -18,8 +16,7 @@ export async function middleware(request: NextRequest) {
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
-    connect-src 'self' https://*.supabase.co ${
-      process.env.NODE_ENV === 'production' ? '' : 'ws://localhost:* http://localhost:*'
+    connect-src 'self' https://*.supabase.co ${process.env.NODE_ENV === 'production' ? '' : 'ws://localhost:* http://localhost:*'
     };
     upgrade-insecure-requests;
   `.replace(/\s{2,}/g, ' ').trim()
@@ -92,7 +89,7 @@ export async function middleware(request: NextRequest) {
       if (forceReset) {
         return NextResponse.redirect(new URL('/update-password', request.url))
       }
-      
+
       // Already logged in — redirect to correct dashboard
       const role = user.user_metadata?.role
       const targetUrl = role === 'super_admin' ? '/admin' : '/'
