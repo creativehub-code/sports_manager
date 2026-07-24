@@ -195,8 +195,22 @@ CREATE POLICY "Authenticated users can delete participants"
   ON participants FOR DELETE TO authenticated USING (true);
 
 -- RESULTS policies (restricted to admin's school context for student results)
-CREATE POLICY "Authenticated users can read results"
-  ON results FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admins can read results only for their students"
+  ON results FOR SELECT TO authenticated
+  USING (
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'super_admin'
+    OR (
+      (auth.jwt() -> 'user_metadata' ->> 'role') = 'school_admin'
+      AND (
+        student_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM students
+          WHERE id = student_id
+            AND school_id::text = (auth.jwt() -> 'user_metadata' ->> 'school_id')
+        )
+      )
+    )
+  );
 
 CREATE POLICY "Admins can insert results only for their students when event is open"
   ON results FOR INSERT TO authenticated

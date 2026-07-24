@@ -39,9 +39,10 @@ export default async function StudentDetailPage({
     .order('event_id')
 
   // Results
-  const { data: results } = await supabase
+  const { data: results, error: resultsError } = await supabase
     .from('results')
     .select(`
+      event_id,
       rank,
       points_earned,
       events(id, name, type, point_multiplier)
@@ -49,10 +50,12 @@ export default async function StudentDetailPage({
     .eq('student_id', params.id)
     .order('rank')
 
+  console.log('Results data:', results, 'Error:', resultsError)
+
   const totalPoints = student.total_points || 0
-  const goldCount = results?.filter((r: any) => r.rank === 1).length || 0
-  const silverCount = results?.filter((r: any) => r.rank === 2).length || 0
-  const bronzeCount = results?.filter((r: any) => r.rank === 3).length || 0
+  const goldCount = results?.filter((r: any) => Number(r.rank) === 1).length || 0
+  const silverCount = results?.filter((r: any) => Number(r.rank) === 2).length || 0
+  const bronzeCount = results?.filter((r: any) => Number(r.rank) === 3).length || 0
 
   return (
     <div className="space-y-6 pb-20">
@@ -133,8 +136,8 @@ export default async function StudentDetailPage({
           </h2>
           <div className="space-y-2">
             {results.map((r: any, i: number) => {
-              const medal = r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : '🥉'
-              const colorClass = r.rank === 1 ? 'text-[#ffb95f]' : r.rank === 2 ? 'text-[#bec6e0]' : 'text-[#e7a066]'
+              const medal = Number(r.rank) === 1 ? '🥇' : Number(r.rank) === 2 ? '🥈' : '🥉'
+              const colorClass = Number(r.rank) === 1 ? 'text-[#ffb95f]' : Number(r.rank) === 2 ? 'text-[#bec6e0]' : 'text-[#e7a066]'
               return (
                 <div key={i} className="glass-card rounded-2xl p-4 flex items-center justify-between border-white/5">
                   <div className="flex items-center gap-3">
@@ -162,28 +165,41 @@ export default async function StudentDetailPage({
             Event participations ({participations.length})
           </h2>
           <div className="space-y-2">
-            {participations.map((p: any, i: number) => (
-              <Link
-                key={i}
-                href={`/events/${p.event_id}`}
-                className="glass-card rounded-2xl p-4 flex items-center justify-between border-white/5 hover:border-white/10 active:scale-[0.99] transition-all"
-              >
-                <div>
-                  <p className="text-xs font-bold text-[#d4e4fa]">{p.events?.name}</p>
-                  <p className="text-[10px] text-[#909097] capitalize mt-0.5">{p.events?.type} event</p>
-                </div>
-                <span
-                  className={cn(
-                    'text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase select-none',
-                    p.events?.status === 'open'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-red-500/10 text-red-400 border-red-500/20'
-                  )}
+            {participations.map((p: any, i: number) => {
+              const result = results?.find((r: any) => r.event_id === p.event_id)
+              const medal = result ? (Number(result.rank) === 1 ? '🥇' : Number(result.rank) === 2 ? '🥈' : '🥉') : null
+              const rankLabel = result ? (Number(result.rank) === 1 ? '1st' : Number(result.rank) === 2 ? '2nd' : '3rd') : null
+
+              return (
+                <Link
+                  key={i}
+                  href={`/events/${p.event_id}`}
+                  className="glass-card rounded-2xl p-4 flex items-center justify-between border-white/5 hover:border-white/10 active:scale-[0.99] transition-all"
                 >
-                  {p.events?.status}
-                </span>
-              </Link>
-            ))}
+                  <div>
+                    <p className="text-xs font-bold text-[#d4e4fa]">{p.events?.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] text-[#909097] capitalize">{p.events?.type} event</span>
+                      {result && (
+                        <span className="text-[10px] text-[#ffb95f] font-semibold flex items-center gap-0.5">
+                          • {medal} {rankLabel} (+{result.points_earned} pts)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={cn(
+                      'text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase select-none',
+                      p.events?.status === 'open'
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border-red-500/20'
+                    )}
+                  >
+                    {p.events?.status}
+                  </span>
+                </Link>
+              )
+            })}
           </div>
         </div>
       )}
