@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Loader2, Camera, UserPlus } from 'lucide-react'
 import type { Group, Category, Student } from '@/lib/types'
-import { useAuth } from '@/components/providers/AuthProvider'
 import Image from 'next/image'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { studentSchema, type StudentFormData } from '@/lib/validations/student'
+import { saveStudentAction } from '@/app/actions/students'
 
 const CATEGORIES: Category[] = ['Sub Junior', 'Junior', 'Senior']
 
@@ -19,26 +21,26 @@ interface StudentFormProps {
 
 export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFormProps) {
   const isEdit = !!student
-  const supabase = createClient()
   const fileRef = useRef<HTMLInputElement>(null)
-  const { schoolId, user } = useAuth()
-
-  const [firstName, setFirstName] = useState(() => {
-    if (!student) return ''
-    const parts = student.name.trim().split(' ')
-    return parts[0] || ''
-  })
-  const [lastName, setLastName] = useState(() => {
-    if (!student) return ''
-    const parts = student.name.trim().split(' ')
-    return parts.slice(1).join(' ') || ''
-  })
-  const [dateOfBirth, setDateOfBirth] = useState(student?.class || '') // Maps to "class" text column
-  const [category, setCategory] = useState<Category>(student?.category || 'Junior') // Maps to "Sport / Discipline"
-  const [groupId, setGroupId] = useState(student?.group_id || '')
+  
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState(student?.photo_url || '')
-  const [loading, setLoading] = useState(false)
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<StudentFormData>({
+    resolver: zodResolver(studentSchema),
+    defaultValues: {
+      firstName: student ? student.name.split(' ')[0] : '',
+      lastName: student ? student.name.split(' ').slice(1).join(' ') : '',
+      dateOfBirth: student?.class || '',
+      category: student?.category || 'Junior',
+      groupId: student?.group_id || '',
+    },
+  })
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -51,91 +53,36 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
     setPhotoPreview(URL.createObjectURL(file))
   }
 
-  async function uploadPhoto(studentId: string): Promise<string | null> {
-    if (!photoFile) return student?.photo_url || null
-    const ext = photoFile.name.split('.').pop()
-    const path = `${studentId}.${ext}`
-    const { error } = await supabase.storage
-      .from('student-photos')
-      .upload(path, photoFile, { upsert: true })
-    if (error) {
-      toast.error('Photo upload failed: ' + error.message)
-      return null
-    }
-    const { data } = supabase.storage.from('student-photos').getPublicUrl(path)
-    return data.publicUrl
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
-    if (!fullName || !dateOfBirth.trim()) {
-      toast.error('Please fill in all required fields')
-      return
-    }
-    setLoading(true)
+  async function onSubmit(data: StudentFormData) {
+    const formData = new FormData()
+    formData.append('firstName', data.firstName)
+    formData.append('lastName', data.lastName)
+    formData.append('dateOfBirth', data.dateOfBirth)
+    formData.append('category', data.category)
+    if (data.groupId) formData.append('groupId', data.groupId)
+    if (photoFile) formData.append('photoFile', photoFile)
+    if (isEdit && student) formData.append('studentId', student.id)
 
     try {
-      if (isEdit) {
-        const photoUrl = await uploadPhoto(student.id)
-        const { error } = await (supabase
-          .from('students') as any)
-          .update({
-            name: fullName,
-            class: dateOfBirth.trim(),
-            category,
-            group_id: groupId || null,
-            photo_url: photoUrl,
-          } as any)
-          .eq('id', student.id)
-        if (error) throw error
-        toast.success('Athlete updated successfully')
-      } else {
-        const currentSchoolId = schoolId || user?.user_metadata?.school_id
-        if (!currentSchoolId) throw new Error('No school context selected')
-        const { data: inserted, error: insertError } = await (supabase
-          .from('students') as any)
-          .insert({
-            name: fullName,
-            class: dateOfBirth.trim(),
-            category,
-            group_id: groupId || null,
-            photo_url: null,
-            school_id: currentSchoolId,
-          } as any)
-          .select()
-          .single()
-        if (insertError) throw insertError
-        if (insertError) throw insertError
-
-        const photoUrl = await uploadPhoto((inserted as any).id)
-        if (photoUrl) {
-          await (supabase
-            .from('students') as any)
-            .update({ photo_url: photoUrl })
-            .eq('id', (inserted as any).id)
-        }
-        toast.success('Athlete added successfully')
-
-        // Reset form fields
-        setFirstName('')
-        setLastName('')
-        setDateOfBirth('')
-        setCategory('Junior')
-        setGroupId('')
+      const result = await saveStudentAction(formData)
+      if (result?.error) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(`Athlete ${isEdit ? 'updated' : 'added'} successfully`)
+      if (!isEdit) {
+        reset()
         setPhotoFile(null)
         setPhotoPreview('')
       }
       onSuccess()
     } catch (err: unknown) {
       toast.error((err as Error).message || 'Operation failed')
-    } finally {
-      setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       {/* Profile Photo Uploader */}
       <div className="flex flex-col items-center justify-center space-y-2">
         <div
@@ -178,12 +125,12 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
           <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">First Name</label>
           <input
             type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            {...register('firstName')}
             placeholder="Enter first name"
-            required
+            disabled={isSubmitting}
             className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] placeholder:text-[#909097]/50"
           />
+          {errors.firstName && <p className="text-xs text-red-500 font-medium">{errors.firstName.message}</p>}
         </div>
 
         {/* Last Name */}
@@ -191,20 +138,20 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
           <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Last Name</label>
           <input
             type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            {...register('lastName')}
             placeholder="Enter last name"
-            required
+            disabled={isSubmitting}
             className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] placeholder:text-[#909097]/50"
           />
+          {errors.lastName && <p className="text-xs text-red-500 font-medium">{errors.lastName.message}</p>}
         </div>
 
         {/* Sport / Discipline (Dropdown for Categories) */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Sport / Discipline</label>
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as Category)}
+            {...register('category')}
+            disabled={isSubmitting}
             className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] focus:outline-none"
           >
             <option value="" disabled className="bg-[#0c1a2c]">Select discipline</option>
@@ -214,6 +161,7 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
               </option>
             ))}
           </select>
+          {errors.category && <p className="text-xs text-red-500 font-medium">{errors.category.message}</p>}
         </div>
 
         {/* Date of Birth / Grade (Input date, maps to class) */}
@@ -221,19 +169,19 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
           <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Date of Birth</label>
           <input
             type="date"
-            value={dateOfBirth}
-            onChange={(e) => setDateOfBirth(e.target.value)}
-            required
+            {...register('dateOfBirth')}
+            disabled={isSubmitting}
             className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] focus:outline-none placeholder:text-[#909097]/50"
           />
+          {errors.dateOfBirth && <p className="text-xs text-red-500 font-medium">{errors.dateOfBirth.message}</p>}
         </div>
 
         {/* Optional Group/House dropdown */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold uppercase tracking-wider text-[#909097]">Assign House / Group</label>
           <select
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
+            {...register('groupId')}
+            disabled={isSubmitting}
             className="w-full px-4 py-3 rounded-2xl input-glass text-sm text-[#d4e4fa] focus:outline-none"
           >
             <option value="" className="bg-[#0c1a2c]">— No group —</option>
@@ -243,34 +191,48 @@ export function StudentForm({ student, groups, onSuccess, onCancel }: StudentFor
               </option>
             ))}
           </select>
+          {errors.groupId && <p className="text-xs text-red-500 font-medium">{errors.groupId.message}</p>}
         </div>
 
       </div>
 
       {/* Button CTA */}
-      <div className="flex gap-3 pt-2">
-        {onCancel && (
+      <div className="pt-2 flex justify-end">
+        {isEdit && onCancel ? (
+          <div className="flex w-full sm:w-auto gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none px-6 py-3 rounded-xl border border-white/10 text-sm font-semibold text-[#d4e4fa] hover:bg-white/5 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none px-6 py-3 rounded-xl action-btn-primary text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <><Loader2 className="w-4 h-4 animate-spin text-[#2a1700]" /> Saving...</>
+              ) : (
+                'Save Changes'
+              )}
+            </button>
+          </div>
+        ) : (
           <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="flex-1 px-4 py-3 rounded-full border border-white/10 hover:bg-white/5 text-sm font-semibold text-[#d4e4fa] transition-all"
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full px-6 py-4 rounded-xl action-btn-primary text-sm flex items-center justify-center gap-2 shadow-xl shadow-[#ffb95f]/10 hover:shadow-[#ffb95f]/20 transition-all disabled:opacity-50"
           >
-            Cancel
+            {isSubmitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin text-[#2a1700]" /> Adding Athlete...</>
+            ) : (
+              <><UserPlus className="w-4 h-4 text-[#2a1700]" /> Add Athlete</>
+            )}
           </button>
         )}
-        <button
-          type="submit"
-          disabled={loading || !firstName.trim() || !dateOfBirth.trim()}
-          className="flex-1 py-3 rounded-full action-btn-primary text-sm flex items-center justify-center gap-2 select-none"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[#2a1700]" />
-          ) : (
-            <UserPlus className="w-4 h-4 text-[#2a1700]" />
-          )}
-          {isEdit ? 'Save Athlete Details' : 'Add Athlete'}
-        </button>
       </div>
     </form>
   )
