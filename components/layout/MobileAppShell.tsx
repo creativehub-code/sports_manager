@@ -212,82 +212,140 @@ export function MobileAppShell({ children, userEmail: _userEmail }: MobileAppShe
         {/* Scrollable Main Content Area */}
         <main className={cn(
           "flex-1 overflow-y-auto px-6 py-6 z-10 relative scrollbar-none",
-          hasBottomDock ? "pb-28 md:pb-6 md:pl-[120px]" : "pb-6"
+          hasBottomDock ? "pb-6 md:pb-6 md:pl-[120px]" : "pb-6"
         )}>
           {children}
         </main>
 
-        {/* Persistent Floating Bottom Dock / Left Sidebar on lg */}
+        {/* Persistent Bottom Dock (mobile) / Left Sidebar (md+) */}
         {hasBottomDock && (
-          <div className="fixed bottom-0 left-0 right-0 h-[80px] px-4 pb-3 md:absolute md:bottom-6 md:left-6 md:right-auto md:top-24 md:w-[88px] md:h-auto md:px-0 md:pb-0 z-50 pointer-events-none flex justify-center md:justify-start">
-            <nav className="glass-dock w-full max-w-[480px] md:max-w-none md:w-full h-full rounded-[24px] px-6 md:px-0 md:py-8 flex flex-row md:flex-col items-center justify-between md:justify-start md:gap-8 pointer-events-auto">
-              {pathname === '/admin' ? (
-                adminNavItems.map((item) => {
-                  const isActive = activeAdminTab === item.tab
-                  const Icon = item.icon
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
-                    >
-                      <Icon
-                        className={cn(
+          <>
+            {/* Mobile: fixed-height bar at the bottom of the flex column — never scrolls */}
+            <div className="flex-shrink-0 md:hidden h-[72px] px-4 pb-3 pt-1 z-50 flex justify-center">
+              <nav className="glass-dock w-full max-w-[480px] h-full rounded-[24px] px-6 flex flex-row items-center justify-between">
+                {pathname === '/admin' ? (
+                  adminNavItems.map((item) => {
+                    const isActive = activeAdminTab === item.tab
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
+                      >
+                        <Icon className={cn(
                           "w-5 h-5 transition-all duration-200",
-                          isActive 
-                            ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]" 
+                          isActive
+                            ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]"
                             : "text-[#909097] hover:text-[#d4e4fa]"
+                        )} />
+                        <span className={cn(
+                          "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
+                          isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
+                        )}>
+                          {item.label}
+                        </span>
+                        {isActive && (
+                          <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
                         )}
-                      />
-                      <span className={cn(
-                        "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
-                        isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
-                      )}>
-                        {item.label}
-                      </span>
-                      
-                      {isActive && (
-                        <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
-                      )}
-                    </Link>
-                  )
-                })
-              ) : (
-                navItems.map((item) => {
-                  const isActive = activeTab === item.href
-                  const Icon = item.icon
+                      </Link>
+                    )
+                  })
+                ) : (
+                  navItems.map((item) => {
+                    const isActive = activeTab === item.href
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
+                      >
+                        <Icon className={cn(
+                          "w-5 h-5 transition-all duration-200",
+                          isActive
+                            ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]"
+                            : "text-[#909097] hover:text-[#d4e4fa]"
+                        )} />
+                        <span className={cn(
+                          "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
+                          isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
+                        )}>
+                          {item.label}
+                        </span>
+                        {isActive && (
+                          <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
+                        )}
+                      </Link>
+                    )
+                  })
+                )}
+              </nav>
+            </div>
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
-                    >
-                      <Icon
-                        className={cn(
-                        "w-5 h-5 transition-all duration-200",
-                        isActive 
-                          ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]" 
-                          : "text-[#909097] hover:text-[#d4e4fa]"
+            {/* md+: Absolutely positioned left sidebar within the device container */}
+            <div className="hidden md:flex absolute bottom-6 left-6 top-24 w-[88px] flex-col z-50 pointer-events-none">
+              <nav className="glass-dock w-full h-auto rounded-[24px] py-8 flex flex-col items-center justify-start gap-8 pointer-events-auto">
+                {pathname === '/admin' ? (
+                  adminNavItems.map((item) => {
+                    const isActive = activeAdminTab === item.tab
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
+                      >
+                        <Icon className={cn(
+                          "w-5 h-5 transition-all duration-200",
+                          isActive
+                            ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]"
+                            : "text-[#909097] hover:text-[#d4e4fa]"
+                        )} />
+                        <span className={cn(
+                          "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
+                          isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
+                        )}>
+                          {item.label}
+                        </span>
+                        {isActive && (
+                          <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
                         )}
-                      />
-                      <span className={cn(
-                        "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
-                        isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
-                      )}>
-                        {item.label}
-                      </span>
-                      
-                      {isActive && (
-                        <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
-                      )}
-                    </Link>
-                  )
-                })
-              )}
-            </nav>
-          </div>
+                      </Link>
+                    )
+                  })
+                ) : (
+                  navItems.map((item) => {
+                    const isActive = activeTab === item.href
+                    const Icon = item.icon
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-200 active:scale-90"
+                      >
+                        <Icon className={cn(
+                          "w-5 h-5 transition-all duration-200",
+                          isActive
+                            ? "text-[#ffb95f] scale-110 drop-shadow-[0_0_8px_rgba(255,185,95,0.4)]"
+                            : "text-[#909097] hover:text-[#d4e4fa]"
+                        )} />
+                        <span className={cn(
+                          "text-[10px] font-medium mt-1 transition-all duration-200 select-none",
+                          isActive ? "text-[#ffb95f]" : "text-[#909097] hover:text-[#d4e4fa]"
+                        )}>
+                          {item.label}
+                        </span>
+                        {isActive && (
+                          <span className="absolute -bottom-1.5 w-1 h-1 rounded-full bg-[#ffb95f] shadow-[0_0_8px_#ffb95f]" />
+                        )}
+                      </Link>
+                    )
+                  })
+                )}
+              </nav>
+            </div>
+          </>
         )}
 
         {/* Dynamic bottom drawer menu */}
